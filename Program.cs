@@ -1,11 +1,25 @@
-﻿using System.Runtime.Serialization.Formatters.Binary;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 
 namespace Projeto2
 {
     class Program
     {
+        [System.Serializable]
+        struct Usuario
+        {
+            public int Id;
+            public string Name;
+            public string Login;
+            public string Password;
+        }
+
         [System.Serializable]
         struct Cliente
         {
@@ -14,6 +28,8 @@ namespace Projeto2
             public string cpf;
         }
 
+        static List<Usuario> usuarios = new List<Usuario>();
+
         static List<Cliente> clientes = new List<Cliente>();
 
 
@@ -21,7 +37,20 @@ namespace Projeto2
 
         static void Main(string[] args)
         {
-            Carregar();
+            bool aut = false;
+
+            aut = Login();      //AUT CHAMA O METODO LOGIN E SALVA O RETORNO DELE
+
+            if(aut == true)     //SE O METODO LOGIN RETORNAR TRUE SIGNIFICA QUE USUARIO CONSEGUIU SE LOGAR,
+            {                   // A PARTIR DISSO MENU É LIBERADO
+                MenuOp();
+            }
+
+        }
+
+        static void MenuOp()
+        {
+            Carregar_Cliente();
             bool sair = false;
 
             while (!sair)
@@ -35,13 +64,13 @@ namespace Projeto2
                 switch (opcao)
                 {
                     case Menu.Listagem:
-                        Listagem();
+                        Listagem_Cliente();
                         break;
                     case Menu.Adicionar:
-                        Adicionar();
+                        Adicionar_Cliente();
                         break;
                     case Menu.Remover:
-                        Remover();
+                        Remover_Cliente();
                         break;
                     case Menu.Sair:
                         sair = true;
@@ -49,106 +78,206 @@ namespace Projeto2
                 }
                 Console.Clear();
             }
+        }
 
-            static void Adicionar()
+        static void Adicionar_Cliente()
+        {
+            Cliente cliente = new Cliente();
+            Console.WriteLine("Cadastro de Cliente: ");
+            Console.WriteLine("Nome do cliente: ");
+            cliente.nome = Console.ReadLine();
+
+            Console.WriteLine("Email do cliente: ");
+            cliente.email = Console.ReadLine();
+
+            Console.WriteLine("CPF do cliente: ");
+            cliente.cpf = Console.ReadLine();
+
+            clientes.Add(cliente);
+            Salvar_Cliente();
+
+            Console.WriteLine("Cadastro concluído, aperte ENTER para sair.");
+            Console.ReadLine();
+        }
+
+        static void Listagem_Cliente()
+        {
+
+            if (clientes.Count > 0)  //SE TEM PELO MENOS UM CLIENTE CADASTRADO
             {
-                Cliente cliente = new Cliente();
-                Console.WriteLine("Cadastro de Cliente: ");
-                Console.WriteLine("Nome do cliente: ");
-                cliente.nome = Console.ReadLine();
+                Console.WriteLine("Lista de clientes: ");
+                int i = 0;
+                foreach (Cliente cliente in clientes)
+                {
+                    Console.WriteLine($"ID: {i}");
+                    Console.WriteLine($"Nome: {cliente.nome}");
+                    Console.WriteLine($"E-mail: {cliente.email}");
+                    Console.WriteLine($"CPF: {cliente.cpf}");
+                    Console.WriteLine("==============================");
+                    i++;
 
-                Console.WriteLine("Email do cliente: ");
-                cliente.email = Console.ReadLine();
-
-                Console.WriteLine("CPF do cliente: ");
-                cliente.cpf = Console.ReadLine();
-
-                clientes.Add(cliente);
-                Salvar();
-
-                Console.WriteLine("Cadastro concluído, aperte ENTER para sair.");
-                Console.ReadLine();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Nenhum cliente cadastrado.");
             }
 
-            static void Listagem()
-            {
+            Console.WriteLine("Aperte ENTER para sair.");
+            Console.ReadLine();
+        }
 
-                if(clientes.Count > 0)  //SE TEM PELO MENOS UM CLIENTE CADASTRADO
-                {
-                    Console.WriteLine("Lista de clientes: ");
-                    int i = 0;
-                    foreach (Cliente cliente in clientes)
-                    {
-                        Console.WriteLine($"ID: {i}");
-                        Console.WriteLine($"Nome: {cliente.nome}");
-                        Console.WriteLine($"E-mail: {cliente.email}");
-                        Console.WriteLine($"CPF: {cliente.cpf}");
-                        Console.WriteLine("==============================");
-                        i++;
-                        
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Nenhum cliente cadastrado.");
-                }
+        static void Salvar_Cliente()
+        {
+            FileStream stream = new FileStream("clients.dat", FileMode.OpenOrCreate);
+            BinaryFormatter encoder = new BinaryFormatter();
 
-                Console.WriteLine("Aperte ENTER para sair.");
-                Console.ReadLine();
-            }
-        
-            static void Salvar()
+            encoder.Serialize(stream, clientes);
+
+            stream.Close();
+        }
+
+        static void Carregar_Cliente()
+        {
+            FileStream stream = new FileStream("clients.dat", FileMode.OpenOrCreate);
+
+            try
             {
-                FileStream stream = new FileStream("clients.dat", FileMode.OpenOrCreate);
                 BinaryFormatter encoder = new BinaryFormatter();
 
-                encoder.Serialize(stream, clientes);
+                clientes = (List<Cliente>)encoder.Deserialize(stream);
 
-                stream.Close();
-            }
-        
-            static void Carregar()
-            {
-                FileStream stream = new FileStream("clients.dat", FileMode.OpenOrCreate);
-
-                try
-                {
-                    BinaryFormatter encoder = new BinaryFormatter();
-
-                    clientes = (List<Cliente>)encoder.Deserialize(stream);
-
-                    if(clientes == null)
-                    {
-                        clientes = new List<Cliente>();
-                    }
-                }
-                catch(Exception ex)
+                if (clientes == null)
                 {
                     clientes = new List<Cliente>();
                 }
-
-                stream.Close();
             }
-        
-            static void Remover()
+            catch (Exception ex)
             {
-                Listagem();
-
-                Console.WriteLine("Digite o ID do cliente que você quer remover: ");
-                int id = int.Parse(Console.ReadLine());
-                
-                if(id >= 0 && id < clientes.Count)
-                {
-                    clientes.RemoveAt(id);
-                    Salvar();
-                }
-                else
-                {
-                    Console.WriteLine("ID digitado é inválido, tente novamente!");
-                    Console.ReadLine();
-                }
+                clientes = new List<Cliente>();
             }
 
+            stream.Close();
         }
+
+        static void Remover_Cliente()
+        {
+            Listagem_Cliente();
+
+            Console.WriteLine("Digite o ID do cliente que você quer remover: ");
+            int id = int.Parse(Console.ReadLine());
+
+            if (id >= 0 && id < clientes.Count)
+            {
+                clientes.RemoveAt(id);
+                Salvar_Cliente();
+            }
+            else
+            {
+                Console.WriteLine("ID digitado é inválido, tente novamente!");
+                Console.ReadLine();
+            }
+        }
+
+        static bool Login()     //SE USUARIO CONSEGUIR LOGAR METODO RETORNA TRUE
+        {
+            string usuario_login;
+            string senha_login;
+
+            bool sair = false;
+
+            while (!sair)
+            {
+
+                int contrllogin = 0;        //VARIAVEL QUE CONTROLA SE IRA TENTAR LOGAR DNV OU ENCERRAR PROGRAM
+
+                Console.WriteLine("CONTROLE DE CLIENTE - LOGIN:\n");
+                Console.WriteLine("Usuario: ");
+                usuario_login = Console.ReadLine();
+                Console.WriteLine("Senha: ");
+                senha_login = Console.ReadLine();
+
+                Carrega_Login();
+
+                foreach (Usuario usuario in usuarios)
+                {
+                    if (usuario_login == usuario.Login)
+                    {
+                        if (senha_login == usuario.Password)
+                        {
+                            Console.WriteLine("LOGADO COM SUCESSO!");
+                            Console.ReadLine();
+                            Console.Clear();
+                            //MenuOp();
+                            
+                            sair = true;
+                            contrllogin = 1;
+                        }
+                    }
+                }
+                if(contrllogin == 0)
+                {
+                    Console.WriteLine("Usuario incorreto ou inexistente!");
+
+                    Console.ReadLine();
+                    Console.Clear();
+                }
+            }
+            return true;
+        }
+
+        static void Carrega_Login()
+        {
+            FileStream streamusuario = new FileStream("usuarios.dat", FileMode.OpenOrCreate);
+
+            try
+            {
+                BinaryFormatter encoder = new BinaryFormatter();
+
+                usuarios = (List<Usuario>)encoder.Deserialize(streamusuario);
+
+                if (usuarios == null)
+                {
+                    usuarios = new List<Usuario>();
+                }
+            }
+            catch (Exception ex)
+            {
+                usuarios = new List<Usuario>();
+            }
+
+            streamusuario.Close();
+        }
+        
+        static void Adicionar_Login()
+        {
+            Usuario usuario = new Usuario();
+            Console.WriteLine("Cadastro de Usuario: ");
+            Console.WriteLine("Nome do usuario: ");
+            usuario.Name = Console.ReadLine();
+
+            Console.WriteLine("Login do usuario: ");
+            usuario.Login = Console.ReadLine();
+
+            Console.WriteLine("Senha do usuario: ");
+            usuario.Password = Console.ReadLine();
+
+            usuarios.Add(usuario);
+            Salvar_Login();
+
+            Console.WriteLine("Cadastro concluído, aperte ENTER para sair.");
+            Console.ReadLine();
+        }
+
+        static void Salvar_Login()
+        {
+            FileStream streamusuario = new FileStream("usuarios.dat", FileMode.OpenOrCreate);
+            BinaryFormatter encoder = new BinaryFormatter();
+
+            encoder.Serialize(streamusuario, usuarios);
+
+            streamusuario.Close();
+        }
+
     }
 }
