@@ -33,7 +33,9 @@ namespace Projeto2
         static List<Cliente> clientes = new List<Cliente>();
 
 
-        enum Menu { Listagem=1, Adicionar=2, Remover=3, Sair=4 }
+        enum Menu { Listagem=1, Adicionar=2, Remover=3, Controle_Usuario = 4, Sair = 5 }
+
+        enum Menu_Usuario { Listagem=1, Adicionar = 2, Remover=3, Sair = 4}
 
         static void Main(string[] args)
         {
@@ -56,7 +58,7 @@ namespace Projeto2
             while (!sair)
             {
                 Console.WriteLine("Sistema de clientes - Bem Vindo!");
-                Console.WriteLine("1-Listagem\n2-Adicionar\n3-Remover\n4-Sair");
+                Console.WriteLine("1-Listagem\n2-Adicionar\n3-Remover\n4-Controle de Usuario\n5-Sair");
 
                 int intOp = int.Parse(Console.ReadLine());
                 Menu opcao = (Menu)intOp;
@@ -72,9 +74,13 @@ namespace Projeto2
                     case Menu.Remover:
                         Remover_Cliente();
                         break;
+                    case Menu.Controle_Usuario:
+                        Controle_Usuario();
+                        break;
                     case Menu.Sair:
                         sair = true;
                         break;
+                    
                 }
                 Console.Clear();
             }
@@ -197,7 +203,7 @@ namespace Projeto2
                 Console.WriteLine("Senha: ");
                 senha_login = Console.ReadLine();
 
-                Carrega_Login();
+                Carrega_Usuario();
 
                 foreach (Usuario usuario in usuarios)
                 {
@@ -226,7 +232,40 @@ namespace Projeto2
             return true;
         }
 
-        static void Carrega_Login()
+        static void Controle_Usuario()
+        {
+            Console.Clear();
+            Carrega_Usuario();
+            bool sair = false;
+
+            while (!sair)
+            {
+                Console.WriteLine("Sistema de clientes - CONTROLE DE USUARIOS!");
+                Console.WriteLine("1-Listagem\n2-Adicionar\n3-Remover\n4-Sair");
+
+                int intOp = int.Parse(Console.ReadLine());
+                Menu_Usuario opcao = (Menu_Usuario)intOp;
+
+                switch (opcao)
+                {
+                    case Menu_Usuario.Listagem:
+                        Listar_Usuario();
+                        break;
+                    case Menu_Usuario.Adicionar:
+                        Adicionar_Usuario();
+                        break;
+                    case Menu_Usuario.Remover:
+                        
+                        break;
+                    case Menu_Usuario.Sair:
+                        sair = true;
+                        break;
+                }
+                Console.Clear();
+            }
+        }
+
+        static void Carrega_Usuario()
         {
             FileStream streamusuario = new FileStream("usuarios.dat", FileMode.OpenOrCreate);
 
@@ -249,7 +288,7 @@ namespace Projeto2
             streamusuario.Close();
         }
         
-        static void Adicionar_Login()
+        static void Adicionar_Usuario()
         {
             Usuario usuario = new Usuario();
             Console.WriteLine("Cadastro de Usuario: ");
@@ -278,6 +317,52 @@ namespace Projeto2
 
             streamusuario.Close();
         }
+
+        static void Listar_Usuario()
+        {
+
+            if (usuarios.Count > 0)  //SE TEM PELO MENOS UM USUARIO CADASTRADO
+            {
+                Console.WriteLine("Lista de usuarios: ");
+                int i = 0;
+                foreach (Usuario usuario in usuarios)
+                {
+                    Console.WriteLine($"ID: {i}");
+                    Console.WriteLine($"Nome: {usuario.Name}");
+                    Console.WriteLine($"Login: {usuario.Login}");
+                    Console.WriteLine("==============================");
+                    i++;
+
+                }
+            }
+            else
+            {
+                Console.WriteLine("Nenhum usuario cadastrado.");
+            }
+
+            Console.WriteLine("Aperte ENTER para sair.");
+            Console.ReadLine();
+        }
+
+        static void Remove_Usuario()
+        {
+            Listar_Usuario();
+
+            Console.WriteLine("Digite o ID do usuario que você quer remover: ");
+            int id = int.Parse(Console.ReadLine());
+
+            if (id >= 0 && id < usuarios.Count)
+            {
+                usuarios.RemoveAt(id);
+                Salvar_Login();
+            }
+            else
+            {
+                Console.WriteLine("ID digitado é inválido, tente novamente!");
+                Console.ReadLine();
+            }
+        }
+
 
     }
 }
